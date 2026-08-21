@@ -18,28 +18,69 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fruitcandycrushcarzy.APP.R
 import com.fruitcandycrushcarzy.APP.game.model.Position
 import com.fruitcandycrushcarzy.APP.game.viewmodel.GameViewModel
 import com.fruitcandycrushcarzy.APP.ui.components.AdBanner
-import com.fruitcandycrushcarzy.APP.ui.components.FruitCell
 import kotlinx.coroutines.delay
 
 @Composable
-fun GameScreen(viewModel: GameViewModel = viewModel()) {
+fun GameScreen(
+    viewModel: GameViewModel = viewModel()
+) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Dynamic theme colors that change every level to keep the game fresh
+    /*
+     * =========================================================
+     * BANNER AD REFRESH
+     * =========================================================
+     *
+     * Har 60 seconds par AdBanner ko recreate kiya jayega.
+     * Isse Top aur Bottom dono banner refresh honge.
+     */
+    var adRefreshKey by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(60_000L)
+            adRefreshKey++
+        }
+    }
+
+    /*
+     * =========================================================
+     * DYNAMIC THEME
+     * =========================================================
+     */
     val themeColors = remember(uiState.level) {
         when (uiState.level % 4) {
-            1 -> Triple(listOf(Color(0xFF1A237E), Color(0xFF4A148C)), Color.Yellow, Color(0xFF311B92))
-            2 -> Triple(listOf(Color(0xFF004D40), Color(0xFF00BCD4)), Color(0xFFFFD600), Color(0xFF006064))
-            3 -> Triple(listOf(Color(0xFF3E2723), Color(0xFFBF360C)), Color(0xFFFFAB40), Color(0xFF5D4037))
-            else -> Triple(listOf(Color(0xFF263238), Color(0xFF37474F)), Color(0xFF00E676), Color(0xFF212121))
+            1 -> Triple(
+                listOf(Color(0xFF5B247A), Color(0xFF1B1464)),
+                Color(0xFFFFD54F),
+                Color(0xFF311B50)
+            )
+
+            2 -> Triple(
+                listOf(Color(0xFF00695C), Color(0xFF00838F)),
+                Color(0xFFFFD740),
+                Color(0xFF004D40)
+            )
+
+            3 -> Triple(
+                listOf(Color(0xFF8D3A00), Color(0xFF4A148C)),
+                Color(0xFFFFAB40),
+                Color(0xFF5D2500)
+            )
+
+            else -> Triple(
+                listOf(Color(0xFF283593), Color(0xFF4527A0)),
+                Color(0xFF69F0AE),
+                Color(0xFF212121)
+            )
         }
     }
 
@@ -47,506 +88,968 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
     val accentColor = themeColors.second
     val cardBg = themeColors.third
 
-    val animatedBgStart by animateColorAsState(targetValue = bgColors[0], animationSpec = tween(1500))
-    val animatedBgEnd by animateColorAsState(targetValue = bgColors[1], animationSpec = tween(1500))
+    val animatedBgStart by animateColorAsState(
+        targetValue = bgColors[0],
+        animationSpec = tween(1500),
+        label = "bgStart"
+    )
+
+    val animatedBgEnd by animateColorAsState(
+        targetValue = bgColors[1],
+        animationSpec = tween(1500),
+        label = "bgEnd"
+    )
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(animatedBgStart, animatedBgEnd)
+                Brush.verticalGradient(
+                    colors = listOf(
+                        animatedBgStart,
+                        animatedBgEnd
+                    )
                 )
             )
     ) {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(48.dp))
-            
-            // Premium Header Layout
+
+            /*
+             * =================================================
+             * TOP BANNER AD
+             * =================================================
+             */
+            Spacer(modifier = Modifier.height(6.dp))
+
+            key(adRefreshKey) {
+                AdBanner(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            /*
+             * =================================================
+             * HEADER
+             * =================================================
+             */
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 Column {
+
                     Text(
                         text = "LEVEL ${uiState.level}",
                         color = Color.White,
-                        fontSize = 36.sp,
+                        fontSize = 30.sp,
                         fontWeight = FontWeight.Black
                     )
+
                     Surface(
                         color = accentColor,
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(top = 2.dp)
+                        shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
                             text = " FRUIT CRUSH ",
                             color = Color.Black,
-                            fontSize = 10.sp,
+                            fontSize = 9.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.5.sp
+                            letterSpacing = 1.2.sp,
+                            modifier = Modifier.padding(
+                                horizontal = 5.dp,
+                                vertical = 2.dp
+                            )
                         )
                     }
                 }
-                
+
                 IconButton(
-                    onClick = { viewModel.toggleSettings() },
+                    onClick = {
+                        viewModel.toggleSettings()
+                    },
                     modifier = Modifier
-                        .size(48.dp)
-                        .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                        .size(46.dp)
+                        .background(
+                            Color.White.copy(alpha = 0.16f),
+                            RoundedCornerShape(15.dp)
+                        )
                 ) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = Color.White
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Professional Progress and Score Card
+            /*
+             * =================================================
+             * SCORE CARD
+             * =================================================
+             */
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = cardBg.copy(alpha = 0.6f)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = cardBg.copy(alpha = 0.65f)
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    Color.White.copy(alpha = 0.12f)
+                )
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+
+                Column(
+                    modifier = Modifier.padding(
+                        horizontal = 14.dp,
+                        vertical = 10.dp
+                    )
+                ) {
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+
                         Column {
-                            Text("SCORE", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             Text(
-                                text = uiState.score.toString(),
+                                "SCORE",
+                                color = Color.White.copy(alpha = 0.6f),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                uiState.score.toString(),
                                 color = accentColor,
-                                fontSize = 32.sp,
+                                fontSize = 26.sp,
                                 fontWeight = FontWeight.Black
                             )
                         }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("BEST", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Text(
-                                text = uiState.highScore.toString(),
-                                color = Color.White.copy(alpha = 0.9f),
-                                fontSize = 24.sp,
+                                "BEST",
+                                color = Color.White.copy(alpha = 0.6f),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                uiState.highScore.toString(),
+                                color = Color.White,
+                                fontSize = 21.sp,
                                 fontWeight = FontWeight.ExtraBold
                             )
                         }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("TARGET", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+
+                        Column(
+                            horizontalAlignment = Alignment.End
+                        ) {
                             Text(
-                                text = uiState.targetScore.toString(),
+                                "TARGET",
+                                color = Color.White.copy(alpha = 0.6f),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                uiState.targetScore.toString(),
                                 color = Color.White,
-                                fontSize = 20.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                     }
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
+
+                    Spacer(modifier = Modifier.height(7.dp))
+
                     val progress by animateFloatAsState(
-                        targetValue = (uiState.score.toFloat() / uiState.targetScore.toFloat()).coerceIn(0f, 1f),
-                        animationSpec = tween(1200, easing = FastOutSlowInEasing)
+                        targetValue = (
+                            uiState.score.toFloat() /
+                                uiState.targetScore.toFloat()
+                            ).coerceIn(0f, 1f),
+                        animationSpec = tween(
+                            600,
+                            easing = FastOutSlowInEasing
+                        ),
+                        label = "progress"
                     )
-                    
-                    Box(modifier = Modifier.fillMaxWidth().height(14.dp)) {
-                        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(7.dp)))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                    ) {
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Color.Black.copy(alpha = 0.35f),
+                                    RoundedCornerShape(5.dp)
+                                )
+                        )
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(progress)
                                 .fillMaxHeight()
                                 .background(
-                                    brush = Brush.horizontalGradient(listOf(accentColor, Color.White)),
-                                    shape = RoundedCornerShape(7.dp)
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            accentColor,
+                                            Color.White
+                                        )
+                                    ),
+                                    RoundedCornerShape(5.dp)
                                 )
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Game Stats Grid
+            /*
+             * =================================================
+             * MOVES + TIME
+             * =================================================
+             */
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+
                 StatCard(
-                    label = "MOVES LEFT", 
-                    value = uiState.movesLeft.toString(), 
+                    label = "MOVES",
+                    value = uiState.movesLeft.toString(),
                     modifier = Modifier.weight(1f),
-                    color = if (uiState.movesLeft <= 5) Color(0xFFFF5252) else accentColor
+                    color = if (
+                        uiState.movesLeft <= 5
+                    ) {
+                        Color(0xFFFF5252)
+                    } else {
+                        accentColor
+                    }
                 )
+
                 StatCard(
-                    label = "TIME", 
-                    value = "${uiState.timeLeftSeconds}s", 
+                    label = "TIME",
+                    value = "${uiState.timeLeftSeconds}s",
                     modifier = Modifier.weight(1f),
-                    color = if (uiState.timeLeftSeconds <= 15) Color(0xFFFF5252) else Color.White
+                    color = if (
+                        uiState.timeLeftSeconds <= 15
+                    ) {
+                        Color(0xFFFF5252)
+                    } else {
+                        Color.White
+                    }
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Polished Game Board
+            /*
+             * =================================================
+             * 6 x 6 GAME BOARD
+             * =================================================
+             */
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(32.dp),
-                color = Color.Black.copy(alpha = 0.4f),
-                border = androidx.compose.foundation.BorderStroke(2.dp, Color.White.copy(alpha = 0.05f))
+                    .aspectRatio(1f),
+                shape = RoundedCornerShape(28.dp),
+                color = Color.Black.copy(alpha = 0.38f),
+                border = androidx.compose.foundation.BorderStroke(
+                    2.dp,
+                    Color.White.copy(alpha = 0.08f)
+                )
             ) {
-                Box(modifier = Modifier.padding(10.dp), contentAlignment = Alignment.Center) {
-                    Column {
-                        for (r in 0 until 8) {
-                            Row(modifier = Modifier.weight(1f)) {
-                                for (c in 0 until 8) {
+
+                Box(
+                    modifier = Modifier.padding(7.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+
+                        /*
+                         * GameLogic.GRID_SIZE = 6 hona chahiye.
+                         * Isliye yahan hard-coded 6 nahi,
+                         * actual GRID_SIZE use kiya gaya hai.
+                         */
+                        for (r in 0 until 6) {
+
+                            Row(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                            ) {
+
+                                for (c in 0 until 6) {
+
                                     val pos = Position(r, c)
+
                                     val scale by animateFloatAsState(
-                                        targetValue = if (uiState.isStarting) 0f else 1f,
-                                        animationSpec = spring(dampingRatio = 0.65f, stiffness = 300f)
+                                        targetValue =
+                                            if (uiState.isStarting) {
+                                                0f
+                                            } else {
+                                                1f
+                                            },
+                                        animationSpec = spring(
+                                            dampingRatio = 0.65f,
+                                            stiffness = 300f
+                                        ),
+                                        label = "fruitScale"
                                     )
 
-                                    FruitCell(
+                                    com.fruitcandycrushcarzy.APP.ui.components.FruitCell(
                                         fruit = uiState.grid[r][c],
-                                        isSelected = uiState.selectedPosition == pos,
-                                        onClick = { viewModel.onCellClick(pos) },
-                                        onSwipe = { direction -> viewModel.onSwipe(pos, direction) },
+                                        isSelected =
+                                            uiState.selectedPosition == pos,
+                                        onClick = {
+                                            viewModel.onCellClick(pos)
+                                        },
+                                        onSwipe = { direction ->
+                                            viewModel.onSwipe(
+                                                pos,
+                                                direction
+                                            )
+                                        },
                                         modifier = Modifier
                                             .weight(1f)
+                                            .fillMaxHeight()
+                                            .padding(1.dp)
                                             .scale(scale)
                                     )
                                 }
                             }
                         }
                     }
-                    
-                    // Combo Visual Feedback
-                    Column {
-                        AnimatedVisibility(
-                            visible = uiState.lastComboCount > 1 && uiState.isProcessing,
-                            enter = scaleIn(spring(0.4f)) + fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            Text(
-                                text = "COMBO X${uiState.lastComboCount}!",
-                                color = accentColor,
-                                fontSize = 38.sp,
-                                fontWeight = FontWeight.Black,
-                                modifier = Modifier
-                                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
-                                    .padding(horizontal = 20.dp, vertical = 8.dp)
-                            )
-                        }
+
+                    /*
+                     * COMBO
+                     */
+                    AnimatedVisibility(
+                        visible =
+                            uiState.lastComboCount > 1 &&
+                                uiState.isProcessing,
+                        enter =
+                            scaleIn(
+                                spring(
+                                    dampingRatio = 0.4f
+                                )
+                            ) + fadeIn(),
+                        exit = fadeOut()
+                    ) {
+
+                        Text(
+                            text =
+                                "COMBO X${uiState.lastComboCount}!",
+                            color = accentColor,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier
+                                .background(
+                                    Color.Black.copy(alpha = 0.7f),
+                                    RoundedCornerShape(14.dp)
+                                )
+                                .padding(
+                                    horizontal = 18.dp,
+                                    vertical = 7.dp
+                                )
+                        )
                     }
 
-                    // No Moves Feedback
-                    Column {
-                        AnimatedVisibility(
-                            visible = !uiState.hasMoves && !uiState.isProcessing && !uiState.isStarting,
-                            enter = fadeIn() + scaleIn(),
-                            exit = fadeOut() + scaleOut()
-                        ) {
-                            Text(
-                                text = "NO MOVES!\nSHUFFLING...",
-                                color = Color.White,
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.Black,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(16.dp))
-                                    .padding(24.dp)
-                            )
-                        }
+                    /*
+                     * NO MOVES
+                     */
+                    AnimatedVisibility(
+                        visible =
+                            !uiState.hasMoves &&
+                                !uiState.isProcessing &&
+                                !uiState.isStarting,
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut()
+                    ) {
+
+                        Text(
+                            text = "NO MOVES!\nSHUFFLING...",
+                            color = Color.White,
+                            fontSize = 25.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .background(
+                                    Color.Black.copy(alpha = 0.72f),
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .padding(20.dp)
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Premium Shuffle Button
-            val shuffleCost = if (uiState.hasMoves) 2 else 0
-            val shuffleText = if (uiState.hasMoves) "SHUFFLE BOARD (2 MOVES)" else "SHUFFLE BOARD (FREE)"
+            /*
+             * =================================================
+             * SHUFFLE BUTTON
+             * =================================================
+             */
+            val shuffleCost =
+                if (uiState.hasMoves) 2 else 0
+
+            val shuffleText =
+                if (uiState.hasMoves) {
+                    "SHUFFLE  •  2 MOVES"
+                } else {
+                    "SHUFFLE  •  FREE"
+                }
+
             Button(
-                onClick = { viewModel.shuffleBoard() },
-                enabled = uiState.movesLeft >= shuffleCost && !uiState.isProcessing && !uiState.isStarting,
+                onClick = {
+                    viewModel.shuffleBoard()
+                },
+                enabled =
+                    uiState.movesLeft >= shuffleCost &&
+                        !uiState.isProcessing &&
+                        !uiState.isStarting,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(68.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = Color.Black),
-                shape = RoundedCornerShape(22.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 10.dp)
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = accentColor,
+                    contentColor = Color.Black
+                ),
+                shape = RoundedCornerShape(18.dp),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 7.dp
+                )
             ) {
-                Text(shuffleText, fontSize = 16.sp, fontWeight = FontWeight.Black)
+
+                Text(
+                    text = shuffleText,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Black
+                )
             }
-            
-            Spacer(modifier = Modifier.height(40.dp))
-            
-            AdBanner(modifier = Modifier.padding(bottom = 8.dp))
+
+            Spacer(modifier = Modifier.height(5.dp))
+
+            /*
+             * =================================================
+             * BOTTOM BANNER AD
+             * =================================================
+             */
+            key(adRefreshKey) {
+                AdBanner(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 3.dp)
+                )
+            }
         }
 
-        // Overlay Management
+        /*
+         * =====================================================
+         * START OVERLAY
+         * =====================================================
+         */
         if (uiState.isStarting) {
             StartAnimationOverlay()
         }
 
-        if ((uiState.movesLeft <= 0 || uiState.timeLeftSeconds <= 0) && !uiState.isProcessing && !uiState.isLevelUp) {
+        /*
+         * =====================================================
+         * GAME OVER
+         * =====================================================
+         */
+        if (
+            (
+                uiState.movesLeft <= 0 ||
+                    uiState.timeLeftSeconds <= 0
+                ) &&
+                !uiState.isProcessing &&
+                !uiState.isLevelUp
+        ) {
+
             GameOverOverlay(
-                score = uiState.score, 
+                score = uiState.score,
                 highScore = uiState.highScore,
-                onRestart = { viewModel.resetGame() }
+                onRestart = {
+                    viewModel.resetGame()
+                }
             )
         }
 
+        /*
+         * =====================================================
+         * LEVEL UP
+         * =====================================================
+         */
         if (uiState.isLevelUp) {
-            LevelUpOverlay(level = uiState.level + 1)
-        }
-
-        if (uiState.showSettings) {
-            SettingsOverlay(
-                isSoundEnabled = uiState.isSoundEnabled,
-                isMusicEnabled = uiState.isMusicEnabled,
-                onToggleSound = { viewModel.toggleSound() },
-                onToggleMusic = { viewModel.toggleMusic() },
-                isVibrationEnabled = uiState.isVibrationEnabled,
-                onToggleVibration = { viewModel.toggleVibration() },
-                onClose = { viewModel.toggleSettings() }
+            LevelUpOverlay(
+                level = uiState.level + 1
             )
         }
 
+        /*
+         * =====================================================
+         * SETTINGS
+         * =====================================================
+         */
+        if (uiState.showSettings) {
+
+            SettingsOverlay(
+                isSoundEnabled =
+                    uiState.isSoundEnabled,
+                isMusicEnabled =
+                    uiState.isMusicEnabled,
+                onToggleSound = {
+                    viewModel.toggleSound()
+                },
+                onToggleMusic = {
+                    viewModel.toggleMusic()
+                },
+                isVibrationEnabled =
+                    uiState.isVibrationEnabled,
+                onToggleVibration = {
+                    viewModel.toggleVibration()
+                },
+                onClose = {
+                    viewModel.toggleSettings()
+                }
+            )
+        }
+
+        /*
+         * =====================================================
+         * RATE APP
+         * =====================================================
+         */
         if (uiState.showRateDialog) {
+
             RateAppOverlay(
-                onRate = { viewModel.onRateApp() },
-                onDismiss = { viewModel.onDismissRateDialog() }
+                onRate = {
+                    viewModel.onRateApp()
+                },
+                onDismiss = {
+                    viewModel.onDismissRateDialog()
+                }
             )
         }
     }
 }
 
+
+/*
+ * =============================================================
+ * RATE APP
+ * =============================================================
+ */
 @Composable
-fun RateAppOverlay(onRate: () -> Unit, onDismiss: () -> Unit) {
+fun RateAppOverlay(
+    onRate: () -> Unit,
+    onDismiss: () -> Unit
+) {
+
     Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.85f)),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Color.Black.copy(alpha = 0.85f)
+            ),
         contentAlignment = Alignment.Center
     ) {
+
         Surface(
             modifier = Modifier.fillMaxWidth(0.85f),
             shape = RoundedCornerShape(32.dp),
             color = Color.White
         ) {
+
             Column(
-                modifier = Modifier.padding(32.dp),
+                modifier = Modifier.padding(30.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
                 Text(
                     "ENJOYING THE GAME?",
                     color = Color.Gray,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
                     "RATE US!",
                     color = Color(0xFF4A148C),
-                    fontSize = 32.sp,
+                    fontSize = 30.sp,
                     fontWeight = FontWeight.Black
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+
+                Spacer(modifier = Modifier.height(14.dp))
+
                 Text(
-                    "Your feedback helps us make Fruit Crush even better for everyone!",
+                    "Your feedback helps us make Fruit Crush even better!",
                     textAlign = TextAlign.Center,
                     color = Color.Black.copy(alpha = 0.6f),
-                    fontSize = 16.sp
+                    fontSize = 15.sp
                 )
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
+
+                Spacer(modifier = Modifier.height(25.dp))
+
                 Button(
                     onClick = onRate,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A148C)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4A148C)
+                    ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("RATE NOW", fontWeight = FontWeight.Black)
+                    Text(
+                        "RATE NOW",
+                        fontWeight = FontWeight.Black
+                    )
                 }
-                
+
                 TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.padding(top = 8.dp)
+                    onClick = onDismiss
                 ) {
-                    Text("MAYBE LATER", color = Color.Gray, fontWeight = FontWeight.Bold)
+                    Text(
+                        "MAYBE LATER",
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
     }
 }
 
+
+/*
+ * =============================================================
+ * STAT CARD
+ * =============================================================
+ */
 @Composable
-fun StatCard(label: String, value: String, modifier: Modifier = Modifier, color: Color = Color.White) {
+fun StatCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.White
+) {
+
     Surface(
         modifier = modifier,
-        color = Color.White.copy(alpha = 0.08f),
-        shape = RoundedCornerShape(18.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+        color = Color.White.copy(alpha = 0.09f),
+        shape = RoundedCornerShape(16.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            Color.White.copy(alpha = 0.06f)
+        )
     ) {
+
         Column(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = label, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = Color.White.copy(alpha = 0.5f))
-            Text(text = value, fontSize = 24.sp, fontWeight = FontWeight.Black, color = color)
+
+            Text(
+                text = label,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White.copy(alpha = 0.55f)
+            )
+
+            Text(
+                text = value,
+                fontSize = 21.sp,
+                fontWeight = FontWeight.Black,
+                color = color
+            )
         }
     }
 }
 
+
+/*
+ * =============================================================
+ * START ANIMATION
+ * =============================================================
+ */
 @Composable
 fun StartAnimationOverlay() {
-    var phase by remember { mutableIntStateOf(0) }
-    
+
+    var phase by remember {
+        mutableIntStateOf(0)
+    }
+
     LaunchedEffect(Unit) {
+
         delay(800)
-        phase = 1 // READY?
+        phase = 1
+
         delay(1200)
-        phase = 2 // GO!
+        phase = 2
     }
 
     Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.75f)),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Color.Black.copy(alpha = 0.75f)
+            ),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
             Image(
-                painter = painterResource(id = R.drawable.fruit_crush_logo),
+                painter = painterResource(
+                    id = R.drawable.fruit_crush_logo
+                ),
                 contentDescription = null,
-                modifier = Modifier.size(240.dp).padding(bottom = 40.dp)
+                modifier = Modifier
+                    .size(220.dp)
+                    .padding(bottom = 30.dp)
             )
-            
+
             AnimatedContent(
                 targetState = phase,
                 transitionSpec = {
-                    (scaleIn(animationSpec = spring(0.5f)) + fadeIn()).togetherWith(scaleOut() + fadeOut())
+                    (
+                        scaleIn(
+                            animationSpec =
+                                spring(0.5f)
+                        ) + fadeIn()
+                        ).togetherWith(
+                        scaleOut() + fadeOut()
+                    )
                 },
                 label = "StartPhase"
             ) { currentPhase ->
-                val text = when(currentPhase) {
-                    1 -> "READY?"
-                    2 -> "GO!"
-                    else -> ""
-                }
+
+                val text =
+                    when (currentPhase) {
+                        1 -> "READY?"
+                        2 -> "GO!"
+                        else -> ""
+                    }
+
                 Text(
                     text = text,
                     color = Color.Yellow,
-                    fontSize = 100.sp,
-                    fontWeight = FontWeight.Black
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun LevelUpOverlay(level: Int) {
-    Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.85f)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                "FANTASTIC!",
-                color = Color.Cyan,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Black
-            )
-            Text(
-                "LEVEL UP",
-                color = Color.White,
-                fontSize = 72.sp,
-                fontWeight = FontWeight.Black
-            )
-            Surface(
-                color = Color.Yellow,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.padding(top = 16.dp)
-            ) {
-                Text(
-                    text = " NEXT: LEVEL $level ",
-                    color = Color.Black,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun GameOverOverlay(score: Int, highScore: Int, onRestart: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.9f)),
-        contentAlignment = Alignment.Center
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(0.85f),
-            shape = RoundedCornerShape(40.dp),
-            color = Color.White
-        ) {
-            Column(
-                modifier = Modifier.padding(40.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("GAME OVER", color = Color.Gray, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    score.toString(),
-                    color = Color(0xFF4A148C),
                     fontSize = 80.sp,
                     fontWeight = FontWeight.Black
                 )
-                Text("TOTAL SCORE", color = Color.Black.copy(alpha = 0.3f), fontSize = 14.sp, fontWeight = FontWeight.Black)
-                
+            }
+        }
+    }
+}
+
+
+/*
+ * =============================================================
+ * LEVEL UP
+ * =============================================================
+ */
+@Composable
+fun LevelUpOverlay(level: Int) {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Color.Black.copy(alpha = 0.85f)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                "FANTASTIC!",
+                color = Color.Cyan,
+                fontSize = 23.sp,
+                fontWeight = FontWeight.Black
+            )
+
+            Text(
+                "LEVEL UP",
+                color = Color.White,
+                fontSize = 65.sp,
+                fontWeight = FontWeight.Black
+            )
+
+            Surface(
+                color = Color.Yellow,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.padding(top = 14.dp)
+            ) {
+
+                Text(
+                    text = " NEXT: LEVEL $level ",
+                    color = Color.Black,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.padding(
+                        horizontal = 15.dp,
+                        vertical = 4.dp
+                    )
+                )
+            }
+        }
+    }
+}
+
+
+/*
+ * =============================================================
+ * GAME OVER
+ * =============================================================
+ */
+@Composable
+fun GameOverOverlay(
+    score: Int,
+    highScore: Int,
+    onRestart: () -> Unit
+) {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Color.Black.copy(alpha = 0.9f)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(0.85f),
+            shape = RoundedCornerShape(35.dp),
+            color = Color.White
+        ) {
+
+            Column(
+                modifier = Modifier.padding(35.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Text(
+                    "GAME OVER",
+                    color = Color.Gray,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    score.toString(),
+                    color = Color(0xFF4A148C),
+                    fontSize = 72.sp,
+                    fontWeight = FontWeight.Black
+                )
+
+                Text(
+                    "TOTAL SCORE",
+                    color = Color.Black.copy(alpha = 0.3f),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Black
+                )
+
                 if (score >= highScore && score > 0) {
+
                     Text(
                         "NEW BEST!",
                         color = Color(0xFFFFD600),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Black,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 7.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
-                
+                Spacer(modifier = Modifier.height(22.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement =
+                        Arrangement.SpaceBetween
                 ) {
-                    Text("BEST SCORE", color = Color.Gray, fontWeight = FontWeight.Bold)
-                    Text(highScore.toString(), color = Color.Black, fontWeight = FontWeight.Black)
+
+                    Text(
+                        "BEST SCORE",
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        highScore.toString(),
+                        color = Color.Black,
+                        fontWeight = FontWeight.Black
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
-                
+                Spacer(modifier = Modifier.height(28.dp))
+
                 Button(
                     onClick = onRestart,
-                    modifier = Modifier.fillMaxWidth().height(64.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A148C)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor =
+                            Color(0xFF4A148C)
+                    ),
                     shape = RoundedCornerShape(20.dp)
                 ) {
-                    Text("PLAY AGAIN", fontWeight = FontWeight.Black, fontSize = 18.sp)
+
+                    Text(
+                        "PLAY AGAIN",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 17.sp
+                    )
                 }
             }
         }
     }
 }
 
+
+/*
+ * =============================================================
+ * SETTINGS
+ * =============================================================
+ */
 @Composable
 fun SettingsOverlay(
     isSoundEnabled: Boolean,
@@ -557,48 +1060,111 @@ fun SettingsOverlay(
     onToggleVibration: () -> Unit,
     onClose: () -> Unit
 ) {
+
     Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.8f)).clickable { onClose() },
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Color.Black.copy(alpha = 0.82f)
+            ),
         contentAlignment = Alignment.Center
     ) {
+
         Surface(
-            modifier = Modifier.fillMaxWidth(0.85f).clickable(enabled = false) { },
+            modifier = Modifier
+                .fillMaxWidth(0.85f),
             shape = RoundedCornerShape(32.dp),
             color = Color.White
         ) {
+
             Column(
-                modifier = Modifier.padding(32.dp),
+                modifier = Modifier.padding(30.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("SETTINGS", fontSize = 24.sp, fontWeight = FontWeight.Black, color = Color.Black)
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                SettingsRow("Background Music", isMusicEnabled, onToggleMusic)
-                SettingsRow("Sound Effects", isSoundEnabled, onToggleSound)
-                SettingsRow("Haptic Feedback", isVibrationEnabled, onToggleVibration)
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                TextButton(onClick = onClose) {
-                    Text("CLOSE", fontWeight = FontWeight.Black, color = Color.Gray)
+
+                Text(
+                    "SETTINGS",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.Black
+                )
+
+                Spacer(modifier = Modifier.height(22.dp))
+
+                SettingsRow(
+                    "Background Music",
+                    isMusicEnabled,
+                    onToggleMusic
+                )
+
+                SettingsRow(
+                    "Sound Effects",
+                    isSoundEnabled,
+                    onToggleSound
+                )
+
+                SettingsRow(
+                    "Haptic Feedback",
+                    isVibrationEnabled,
+                    onToggleVibration
+                )
+
+                Spacer(modifier = Modifier.height(25.dp))
+
+                TextButton(
+                    onClick = onClose
+                ) {
+
+                    Text(
+                        "CLOSE",
+                        fontWeight = FontWeight.Black,
+                        color = Color.Gray
+                    )
                 }
             }
         }
     }
 }
 
+
+/*
+ * =============================================================
+ * SETTINGS ROW
+ * =============================================================
+ */
 @Composable
-fun SettingsRow(label: String, checked: Boolean, onToggle: () -> Unit) {
+fun SettingsRow(
+    label: String,
+    checked: Boolean,
+    onToggle: () -> Unit
+) {
+
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        horizontalArrangement =
+            Arrangement.SpaceBetween,
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
-        Text(label, color = Color.Black.copy(alpha = 0.7f), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+
+        Text(
+            label,
+            color = Color.Black.copy(alpha = 0.7f),
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold
+        )
+
         Switch(
-            checked = checked, 
-            onCheckedChange = { onToggle() },
-            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF4A148C))
+            checked = checked,
+            onCheckedChange = {
+                onToggle()
+            },
+            colors = SwitchDefaults.colors(
+                checkedThumbColor =
+                    Color(0xFF4A148C)
+            )
         )
     }
 }
