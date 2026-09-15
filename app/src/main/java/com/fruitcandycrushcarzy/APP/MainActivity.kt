@@ -30,6 +30,7 @@ import com.fruitcandycrushcarzy.APP.game.util.VibrationManager
 import com.fruitcandycrushcarzy.APP.game.viewmodel.GameEvent
 import com.fruitcandycrushcarzy.APP.game.viewmodel.GameViewModel
 import com.fruitcandycrushcarzy.APP.ui.GameScreen
+import com.fruitcandycrushcarzy.APP.ui.HomeScreen
 import com.fruitcandycrushcarzy.APP.ui.theme.FRUITCANDYCRUSHCARZYTheme
 
 class MainActivity : ComponentActivity() {
@@ -118,7 +119,21 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                GameScreen(viewModel = viewModel)
+                var showHome by remember { androidx.compose.runtime.mutableStateOf(true) }
+
+                if (showHome) {
+                    HomeScreen(
+                        onPlay = { level ->
+                            viewModel.startLevel(level)
+                            showHome = false
+                        }
+                    )
+                } else {
+                    GameScreen(
+                        viewModel = viewModel,
+                        onHome = { showHome = true }
+                    )
+                }
             }
         }
     }
