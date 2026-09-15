@@ -97,34 +97,42 @@ class GameViewModel(private val scoreRepository: ScoreRepository) : ViewModel() 
             }
         }
         
-        startGameSequence()
     }
 
-    private fun startGameSequence() {
+    fun startLevel(level: Int) {
+        timerJob?.cancel()
+        val safeLevel = level.coerceIn(1, 100)
+        val initialGrid = GameLogic.createInitialGrid()
+        val moves = (30 - ((safeLevel - 1) / 10)).coerceAtLeast(20)
+        val time = (90 - ((safeLevel - 1) / 15) * 5).coerceAtLeast(45)
+        val target = 1000 + (safeLevel - 1) * 500
+        _uiState.update {
+            it.copy(
+                grid = initialGrid,
+                score = 0,
+                movesLeft = moves,
+                level = safeLevel,
+                timeLeftSeconds = time,
+                targetScore = target,
+                selectedPosition = null,
+                isProcessing = false,
+                isLevelUp = false,
+                isStarting = true,
+                lastComboCount = 0,
+                hasMoves = true,
+                showSettings = false
+            )
+        }
         viewModelScope.launch {
-            _uiState.update { it.copy(isStarting = true) }
-            delay(2500) // Match overlay duration
+            scoreRepository.incrementGamesPlayed()
+            delay(2500)
             _uiState.update { it.copy(isStarting = false) }
             startTimer()
         }
     }
 
     fun resetGame() {
-        timerJob?.cancel()
-        val initialGrid = GameLogic.createInitialGrid()
-        _uiState.update { 
-            GameState(
-                grid = initialGrid,
-                highScore = it.highScore,
-                isSoundEnabled = it.isSoundEnabled,
-                isMusicEnabled = it.isMusicEnabled,
-                isVibrationEnabled = it.isVibrationEnabled
-            )
-        }
-        viewModelScope.launch {
-            scoreRepository.incrementGamesPlayed()
-        }
-        startGameSequence()
+        startLevel(_uiState.value.level)
     }
 
     private fun startTimer() {
@@ -290,11 +298,13 @@ class GameViewModel(private val scoreRepository: ScoreRepository) : ViewModel() 
             delay(2000)
             _uiState.update { 
                 it.copy(
-                    level = it.level + 1,
-                    targetScore = it.targetScore + (it.level + 1) * 1000,
-                    movesLeft = it.movesLeft + 10,
-                    timeLeftSeconds = it.timeLeftSeconds + 60,
-                    isLevelUp = false
+                    level = (it.level + 1).coerceAtMost(100),
+                    score = 0,
+                    targetScore = 1000 + it.level * 500,
+                    movesLeft = (30 - (it.level / 10)).coerceAtLeast(20),
+                    timeLeftSeconds = (90 - (it.level / 15) * 5).coerceAtLeast(45),
+                    isLevelUp = false,
+                    isStarting = false
                 )
             }
             startTimer()
