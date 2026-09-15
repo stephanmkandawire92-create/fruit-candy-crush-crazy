@@ -2,6 +2,7 @@ package com.fruitcandycrushcarzy.APP.ui
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,8 +31,10 @@ import com.fruitcandycrushcarzy.APP.ui.components.FruitCell
 import kotlinx.coroutines.delay
 
 @Composable
-fun GameScreen(viewModel: GameViewModel = viewModel()) {
+fun GameScreen(viewModel: GameViewModel = viewModel(), onHome: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
+
+    BackHandler { onHome() }
 
     // Dynamic theme colors that change every level to keep the game fresh
     val themeColors = remember(uiState.level) {
@@ -95,13 +98,18 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
                     }
                 }
                 
-                IconButton(
-                    onClick = { viewModel.toggleSettings() },
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
-                ) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = onHome) {
+                        Text("HOME", color = Color.White, fontWeight = FontWeight.Black)
+                    }
+                    IconButton(
+                        onClick = { viewModel.toggleSettings() },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                    }
                 }
             }
 
