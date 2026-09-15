@@ -65,7 +65,7 @@ fun HomeScreen(
                 LevelMap(
                     onBack = { screen = HomeDestination.HOME },
                     onLevel = { level ->
-                        if (level <= 10) onPlay(level)
+                        onPlay(level)
                     }
                 )
             }
@@ -243,8 +243,8 @@ private fun LevelMap(
             verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            items((1..30).toList()) { level ->
-                val unlocked = level <= 10
+            items((1..100).toList()) { level ->
+                val unlocked = level <= 100
                 LevelButton(level, unlocked) { onLevel(level) }
             }
         }
